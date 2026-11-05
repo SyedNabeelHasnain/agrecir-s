@@ -86,7 +86,7 @@
   --radius-sm: 14px;
   --shadow-1: 0 1px 2px rgb(10 46 18 / .05), 0 4px 14px rgb(10 46 18 / .06);
   --shadow-2: 0 2px 6px rgb(10 46 18 / .06), 0 22px 48px -12px rgb(10 46 18 / .22);
-  --wrap: 1240px;
+  --wrap: 1375px;
   --gut: clamp(18px, 4vw, 44px);
   --head-h: 76px;
   --ease: cubic-bezier(.22, .7, .2, 1);
