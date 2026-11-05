@@ -1,0 +1,125 @@
+<IfModule mod_autoindex.c>
+  Options -Indexes
+</IfModule>
+<IfModule mod_negotiation.c>
+  Options -MultiViews
+</IfModule>
+
+DirectoryIndex index.html index.php
+DirectorySlash On
+AddDefaultCharset UTF-8
+
+<IfModule mod_mime.c>
+  AddType application/manifest+json .webmanifest
+  AddType font/woff2 .woff2
+  AddType image/webp .webp
+  AddType image/svg+xml .svg
+  AddType text/plain .txt
+  AddCharset UTF-8 .html .css .js .json .webmanifest .xml .txt .svg
+</IfModule>
+
+ErrorDocument 404 /404.html
+ErrorDocument 410 /410.html
+
+# Block direct web access to sensitive files and credentials (cPanel & Hostinger)
+<FilesMatch "^(agrecir-mail-config\.php|\.env|\.git|\.user\.ini|php\.ini|composer\.(json|lock)|package(-lock)?\.json)$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order deny,allow
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # 1. Allow cPanel AutoSSL & Let's Encrypt HTTP-01 challenge verification
+  RewriteCond %{REQUEST_URI} ^/\.well-known/acme-challenge/ [NC]
+  RewriteRule .* - [L]
+
+  # 2. Canonical Domain & HTTPS Enforcement (cPanel / Hostinger / Cloudflare / Reverse Proxies)
+  RewriteCond %{HTTP_HOST} ^www\.agrecir\.com$ [NC]
+  RewriteRule ^ https://agrecir.com%{REQUEST_URI} [R=301,L]
+
+  RewriteCond %{HTTP_HOST} ^agrecir\.com$ [NC]
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https [NC]
+  RewriteCond %{HTTP:X-Forwarded-SSL} !on [NC]
+  RewriteCond %{HTTP:CF-Visitor} !'"scheme":"https"' [NC]
+  RewriteRule ^ https://agrecir.com%{REQUEST_URI} [R=301,L]
+
+  # 3. Legacy URL 301 Redirects
+  RewriteRule ^(?:home-page-[1-9]|sample-page)/?$ / [R=301,L]
+  RewriteRule ^about-us/?$ /about/ [R=301,L]
+  RewriteRule ^our-team/?$ /about/leadership/ [R=301,L]
+  RewriteRule ^request-quote/?$ /contact/ [R=301,L]
+  RewriteRule ^service-cat(?:/.*)?$ /services/ [R=301,L]
+  RewriteRule ^service/agriculture-and-technology/?$ /services/smart-agriculture/ [R=301,L]
+  RewriteRule ^service/lawn-and-garden-care/?$ /approach/regenerative-agriculture/ [R=301,L]
+  RewriteRule ^service/snow-ice-removal/?$ /approach/circular-agriculture/ [R=301,L]
+  RewriteRule ^blog/?$ /insights/ [R=301,L]
+  RewriteRule ^faqs/?$ /faq/ [R=301,L]
+  RewriteRule ^wp-sitemap.*\.xml$ /sitemap.xml [R=301,L]
+
+  # 4. Old WordPress & Obsolete Route 410 Gone
+  RewriteRule ^service(?:/.*)?$ - [G,L]
+  RewriteRule ^project(?:/.*)?$ - [G,L]
+  RewriteRule ^project-category(?:/.*)?$ - [G,L]
+  RewriteRule ^(?:201[0-9]|202[0-3])(?:/.*)?$ - [G,L]
+  RewriteRule ^(?:category|tag|author)(?:/.*)?$ - [G,L]
+  RewriteRule ^(?:testimonials|testimonial|pricing-table)(?:/.*)?$ - [G,L]
+  RewriteRule ^(?:shop|cart|checkout|my-account)(?:-2)?(?:/.*)?$ - [G,L]
+  RewriteRule ^(?:sabzi-mandi|product|product-category|product-tag)(?:/.*)?$ - [G,L]
+  RewriteRule ^(?:wp-admin|wp-content|wp-includes|wp-json)(?:/.*)?$ - [G,L]
+  RewriteRule ^(?:wp-login\.php|xmlrpc\.php)$ - [G,L]
+</IfModule>
+
+# Brotli compression (when supported by cPanel / LiteSpeed / Apache)
+<IfModule mod_brotli.c>
+  AddOutputFilterByType BROTLI_COMPRESS text/html text/plain text/xml text/css application/javascript text/javascript application/json application/ld+json application/manifest+json image/svg+xml
+</IfModule>
+
+# Gzip / Deflate compression
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css application/javascript text/javascript application/json application/ld+json application/manifest+json image/svg+xml
+</IfModule>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresDefault "access plus 1 hour"
+  ExpiresByType text/html "access plus 0 seconds"
+  ExpiresByType application/xml "access plus 1 hour"
+  ExpiresByType text/xml "access plus 1 hour"
+  ExpiresByType text/plain "access plus 1 day"
+  ExpiresByType application/manifest+json "access plus 7 days"
+  ExpiresByType text/css "access plus 1 year"
+  ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType font/woff2 "access plus 1 year"
+  ExpiresByType image/webp "access plus 1 year"
+  ExpiresByType image/png "access plus 1 year"
+  ExpiresByType image/svg+xml "access plus 1 year"
+  ExpiresByType image/x-icon "access plus 1 month"
+  ExpiresByType application/pdf "access plus 1 month"
+</IfModule>
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()"
+  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=HTTPS
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.google-analytics.com https://*.google-analytics.com; font-src 'self'; connect-src 'self' https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
+
+  <FilesMatch "\.(?:woff2|webp|png|svg|css|js)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  <FilesMatch "\.woff2$">
+    Header set Access-Control-Allow-Origin "*"
+  </FilesMatch>
+  <FilesMatch "\.(?:html|xml)$">
+    Header set Cache-Control "public, max-age=0, must-revalidate"
+  </FilesMatch>
+</IfModule>
